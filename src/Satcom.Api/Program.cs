@@ -1,6 +1,3 @@
-// export ConnectionStrings__Postgres="Host=localhost;Port=5433;Database=satcom;Username=satcom;Password=satcom" export ApiKey=dev-key-123 dotnet run --project src/Satcom.Api
-
-
 using Microsoft.EntityFrameworkCore;
 using Satcom.Api;
 using Satcom.Api.Endpoints;
