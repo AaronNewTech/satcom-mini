@@ -1,0 +1,7 @@
+dotnet ef migrations add AddCountryToGroundStation
+
+dotnet ef database update
+
+dotnet ef database drop --force --yes
+
+dotnet ef database update

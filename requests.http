@@ -1,0 +1,33 @@
+### Health
+GET http://localhost:5143/healthz
+
+
+### Post telemetry (replace GUIDs)
+POST http://localhost:5143/v1/telemetry
+x-api-key: dev-key-123
+Content-Type: application/json
+
+
+{
+"satelliteId": "00000000-0000-0000-0000-000000000001",
+"stationId": "00000000-0000-0000-0000-000000000010",
+"receivedAtUtc": "2025-09-17T16:00:00Z",
+"rssiDbm": -85.1,
+"toaMs": 12.3,
+"bearingDeg": 47.0,
+"snrDb": 22.2
+}
+
+
+### Get location
+GET http://localhost:5143/v1/satellites/00000000-0000-0000-0000-000000000001/location
+x-api-key: dev-key-123
+
+
+### Get observations
+GET http://localhost:5143/v1/satellites/00000000-0000-0000-0000-000000000001/observations?limit=25
+x-api-key: dev-key-123
+
+
+GET http://localhost:5143/v1/telemetry/satellites?stationId={b576ab3b-49b0-4959-b4bd-dc55135566ce}
+x-api-key: dev-key-123
