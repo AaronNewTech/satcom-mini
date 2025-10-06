@@ -3,11 +3,21 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import redIconUrl from '../assets/marker-icon-2x-red.png';
+import blueIconUrl from '../assets/marker-icon-2x-blue.png';
 import shadowUrl from 'leaflet/dist/images/marker-shadow.png';
 import { useGroundStations } from '../hooks/useGroundStations';
 
 const redIcon = new L.Icon({
   iconUrl: redIconUrl,
+  shadowUrl,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
+
+const blueIcon = new L.Icon({
+  iconUrl: blueIconUrl,
   shadowUrl,
   iconSize: [25, 41],
   iconAnchor: [12, 41],
@@ -121,6 +131,7 @@ const MapView: React.FC = () => {
               <Marker
                 key={gs.id}
                 position={[gs.lat, gs.lon] as [number, number]}
+                icon={redIcon}
               >
                 <Popup>
                   <div>
