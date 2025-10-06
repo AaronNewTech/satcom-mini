@@ -21,8 +21,11 @@ export function useTelemetry() {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch('http://localhost:5143/v1/telemetry', {
-          headers: { 'x-api-key': 'dev-key-123' },
+        const apiBaseUrl =
+          import.meta.env.VITE_API_BASE_URL || 'http://localhost:5143';
+        const apiKey = import.meta.env.VITE_API_KEY || 'dev-key-123';
+        const res = await fetch(`${apiBaseUrl}/v1/telemetry`, {
+          headers: { 'x-api-key': apiKey },
         });
         if (!res.ok) throw new Error('Failed to fetch telemetry data');
         const data = await res.json();

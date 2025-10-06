@@ -45,7 +45,10 @@ builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.WithOrigins("http://localhost:5173")
+        policy.WithOrigins(
+                "http://localhost:5173",  // Local development
+                "https://kind-tree-03f7ba40f.2.azurestaticapps.net"  // Your deployed frontend
+              )
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
@@ -54,7 +57,8 @@ builder.Services.AddCors(options =>
 // Old debug lines (replaced with better logging above)
 
 // Config
-var connString = builder.Configuration.GetConnectionString("Postgres");
+var connString = Environment.GetEnvironmentVariable("ConnectionStrings__Postgres") 
+    ?? builder.Configuration.GetConnectionString("Postgres");
 
 // var apiKey = builder.Configuration["ApiKey"];
 // if (string.IsNullOrEmpty(apiKey) || apiKey == "change-me")
