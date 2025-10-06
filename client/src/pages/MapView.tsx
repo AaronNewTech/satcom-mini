@@ -23,8 +23,10 @@ const MapView: React.FC = () => {
 
   const fetchSatellitesForStation = async (stationId: string) => {
     try {
+        const apiBaseUrl =
+          import.meta.env.VITE_API_BASE_URL || 'http://localhost:5143';
       const res = await fetch(
-        `http://localhost:5143/v1/telemetry/satellites?stationId=${stationId}`,
+        `${apiBaseUrl}/v1/telemetry/satellites?stationId=${stationId}`,
         { headers: { 'x-api-key': 'dev-key-123' } },
       );
       const data = await res.json();
@@ -33,8 +35,9 @@ const MapView: React.FC = () => {
         data.map(async (sat: any) => {
           let lat, lon;
           try {
+            
             const locRes = await fetch(
-              `http://localhost:5143/v1/satellites/${sat.id}/location`,
+              `${apiBaseUrl}/v1/satellites/${sat.id}/location`,
               {
                 headers: { 'x-api-key': 'dev-key-123' },
               },
