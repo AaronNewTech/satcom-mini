@@ -29,6 +29,8 @@ if (!envLoaded)
 
 var builder = WebApplication.CreateBuilder(args);
 
+
+
 // Debug: Verify environment variables are loaded (remove in production)
 Console.WriteLine($"🗄️ DB Connection: {builder.Configuration.GetConnectionString("Postgres")}");
 Console.WriteLine($"🔑 Internal API Key: {builder.Configuration["ApiKey"]}");
@@ -47,10 +49,12 @@ builder.Services.AddCors(options =>
     {
         policy.WithOrigins(
                 "http://localhost:5173",  // Local development
-                "https://kind-tree-03f7ba40f.2.azurestaticapps.net"  // Your deployed frontend
+                "https://satcom-mini.vercel.app",
+                "https://*.vercel.app",
               )
               .AllowAnyHeader()
-              .AllowAnyMethod();
+              .AllowAnyMethod()
+              .AllowCredentials();
     });
 });
 
