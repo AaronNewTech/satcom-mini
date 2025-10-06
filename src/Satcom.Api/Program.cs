@@ -48,9 +48,9 @@ builder.Services.AddCors(options =>
     options.AddDefaultPolicy(policy =>
     {
         policy.WithOrigins(
-                "http://localhost:5173",  // Local development
+                "http://localhost:5173",
                 "https://satcom-mini.vercel.app",
-                "https://*.vercel.app",
+                "https://*.vercel.app"
               )
               .AllowAnyHeader()
               .AllowAnyMethod()
