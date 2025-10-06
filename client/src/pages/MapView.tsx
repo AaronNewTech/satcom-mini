@@ -131,7 +131,7 @@ const MapView: React.FC = () => {
               <Marker
                 key={gs.id}
                 position={[gs.lat, gs.lon] as [number, number]}
-                icon={redIcon}
+                icon={blueIcon}
               >
                 <Popup>
                   <div>
