@@ -685,7 +685,7 @@ public class SatelliteEndpointsTests : IClassFixture<WebApplicationFactory<Progr
     public SatelliteEndpointsTests(WebApplicationFactory<Program> factory)
     {
         _client = factory.CreateClient();
-        _client.DefaultRequestHeaders.Add("x-api-key", "dev-key-123");
+        _client.DefaultRequestHeaders.Add("x-api-key", "change-me");
     }
 
     [Fact]

@@ -9,6 +9,13 @@ public class ApiKeyMiddleware(RequestDelegate next, IConfiguration config, ILogg
 private const string HeaderName = "x-api-key";
 public async Task InvokeAsync(HttpContext context)
 {
+	// Allow unauthenticated access to health and swagger UI endpoints
+	var path = context.Request.Path;
+	if (path.StartsWithSegments("/swagger") || path.StartsWithSegments("/health") || path.StartsWithSegments("/healthz") || path.StartsWithSegments("/favicon.ico"))
+	{
+		await next(context);
+		return;
+	}
 var expected = config["ApiKey"];
 if (string.IsNullOrWhiteSpace(expected))
 {

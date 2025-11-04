@@ -23,7 +23,11 @@ export function useTelemetry() {
       try {
         const apiBaseUrl =
           import.meta.env.VITE_API_BASE_URL || 'http://localhost:5143';
-        const apiKey = import.meta.env.VITE_API_KEY || 'dev-key-123';
+        const apiKey = import.meta.env.VITE_API_KEY;
+        if (!apiKey)
+          throw new Error(
+            'VITE_API_KEY is not set. Create client/.env.local with VITE_API_KEY',
+          );
         const res = await fetch(`${apiBaseUrl}/v1/telemetry`, {
           headers: { 'x-api-key': apiKey },
         });

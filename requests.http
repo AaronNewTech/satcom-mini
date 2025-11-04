@@ -4,7 +4,7 @@ GET http://localhost:5143/healthz
 
 ### Post telemetry (replace GUIDs)
 POST http://localhost:5143/v1/telemetry
-x-api-key: dev-key-123
+x-api-key: change-me
 Content-Type: application/json
 
 
@@ -21,13 +21,13 @@ Content-Type: application/json
 
 ### Get location
 GET http://localhost:5143/v1/satellites/00000000-0000-0000-0000-000000000001/location
-x-api-key: dev-key-123
+x-api-key: change-me
 
 
 ### Get observations
 GET http://localhost:5143/v1/satellites/00000000-0000-0000-0000-000000000001/observations?limit=25
-x-api-key: dev-key-123
+x-api-key: change-me
 
 
 GET http://localhost:5143/v1/telemetry/satellites?stationId={b576ab3b-49b0-4959-b4bd-dc55135566ce}
-x-api-key: dev-key-123
+x-api-key: change-me

@@ -144,7 +144,7 @@ dotnet sln add tests/Satcom.Api.Tests/Satcom.Api.Tests.csproj
   "ConnectionStrings": {
     "Postgres": "Host=localhost;Port=5433;Database=satcom;Username=satcom;Password=satcom"
   },
-  "ApiKey": "dev-key-123"
+  "ApiKey": "change-me"
 }
 ```
 
@@ -757,7 +757,7 @@ export function useGroundStations() {
       setError(null);
       try {
         const res = await fetch('http://localhost:5143/v1/groundstations', {
-          headers: { 'x-api-key': 'dev-key-123' },
+          headers: { 'x-api-key': 'change-me' },
         });
         if (!res.ok) throw new Error('Failed to fetch groundstations');
         const data = await res.json();
@@ -805,7 +805,7 @@ const MapView: React.FC = () => {
     try {
       const res = await fetch(
         `http://localhost:5143/v1/telemetry/satellites?stationId=${stationId}`,
-        { headers: { 'x-api-key': 'dev-key-123' } },
+        { headers: { 'x-api-key': 'change-me' } },
       );
       const data = await res.json();
       setSatellites(data.filter((sat: any) => sat.lat && sat.lon));
@@ -984,7 +984,7 @@ dotnet ef database update
 ### API Documentation
 
 - Swagger UI: http://localhost:5143/swagger
-- API Key: Include `x-api-key: dev-key-123` header
+- API Key: Include `x-api-key: change-me` header
 ```
 
 ---

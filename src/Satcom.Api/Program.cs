@@ -5,6 +5,7 @@ using Satcom.Api.Security;
 using Satcom.Api.Configuration;
 using Satcom.Api.Services;
 using Microsoft.AspNetCore.OpenApi;
+using Microsoft.OpenApi.Models;
 using Satcom.Api.Domain;
 
 // Load environment variables from .env file
@@ -82,7 +83,30 @@ builder.Services.Configure<ExternalApiOptions>(options =>
 builder.Services.AddHttpClient<IExternalSatelliteService, ExternalSatelliteService>();
 
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    // Add API key (x-api-key) support to Swagger UI so you can authenticate requests from the UI
+    options.AddSecurityDefinition("ApiKey", new OpenApiSecurityScheme
+    {
+        Description = "API Key needed to access the endpoints. Enter the value in the field below.",
+        Type = SecuritySchemeType.ApiKey,
+        Name = "x-api-key",
+        In = ParameterLocation.Header,
+        Scheme = "ApiKeyScheme"
+    });
+
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "ApiKey" }
+            }, new List<string>()
+        }
+    });
+});
+// Use controller-based routing in addition to minimal APIs
+builder.Services.AddControllers();
 
 
 
@@ -102,13 +126,18 @@ app.UseSwaggerUI();
 // Health
 app.MapGet("/healthz", () => new { status = "ok" });
 
+// Map attribute routed controllers (converted from minimal endpoints)
+app.MapControllers();
+
 
 // Endpoints
 
-app.MapTelemetry();
-app.MapSatellites();
-app.MapGroundStations();
-app.MapExternalApi();
+// Minimal endpoint mappings converted to controllers. Keep these commented to avoid duplicate routes.
+// app.MapTelemetry();
+// app.MapSatellites();
+// Ground station endpoints have been converted to a controller
+// app.MapGroundStations();
+// app.MapExternalApi();
 
 
 // Apply pending migrations automatically in dev (optional)
