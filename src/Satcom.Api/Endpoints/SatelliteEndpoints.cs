@@ -31,31 +31,11 @@ public static RouteGroupBuilder MapSatellites(this IEndpointRouteBuilder app)
 	}).WithOpenApi();
 
 
-group.MapGet("/{id:guid}/location", async (Guid id, AppDbContext db) =>
-{
-// Grab last N observations across stations
-var latest = await db.Telemetries
-.Where(t => t.SatelliteId == id)
-.OrderByDescending(t => t.ReceivedAtUtc)
-.Take(10)
-.Select(t => new { t.BearingDeg, t.Station!.Lat, t.Station!.Lon })
-.ToListAsync();
-
-
-if (latest.Count < 2) return Results.Ok(null);
-
-
-var estimate = GeoCalc.EstimateFromBearings(
-latest.Where(x => x.BearingDeg.HasValue)
-.Select(x => (new GeoPoint(x.Lat, x.Lon), x.BearingDeg!.Value))
-);
-
-
-if (estimate is null) return Results.Ok(null);
-var e = estimate.Value;
-return Results.Ok(new LocationOut(e.Point.Lat, e.Point.Lon, e.AccuracyKm, e.ComputedAtUtc));
-})
-.WithOpenApi();
+// The legacy /location endpoint (bearing-based triangulation) has been
+// removed from the public API surface. Consumers should use the external
+// positions proxy at `/v1/external/positions/{noradId}/{observerLat}/{observerLng}/{observerAlt}/{seconds}`
+// which fetches per-second position, azimuth and elevation data from the
+// configured external provider.
 
 
 group.MapGet("/{id:guid}/observations", async (Guid id, int limit, AppDbContext db) =>

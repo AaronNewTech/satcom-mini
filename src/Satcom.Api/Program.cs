@@ -77,10 +77,22 @@ opt.UseNpgsql(connString));
 builder.Services.Configure<ExternalApiOptions>(options =>
 {
     options.ExternalApiKey = builder.Configuration["ExternalApiKey"] ?? string.Empty;
+    // allow ExternalApi:BaseUrl or ExternalApiBaseUrl env var
+    options.BaseUrl = builder.Configuration["ExternalApi:BaseUrl"] ?? builder.Configuration["ExternalApiBaseUrl"] ?? string.Empty;
+    // allow ExternalApi:SendKeyAsQuery or ExternalApiSendKeyAsQuery
+    var sendKeyAsQuery = builder.Configuration["ExternalApi:SendKeyAsQuery"] ?? builder.Configuration["ExternalApiSendKeyAsQuery"] ?? "false";
+    if (bool.TryParse(sendKeyAsQuery, out var b)) options.SendKeyAsQuery = b;
 });
 
 // Register HTTP client and external satellite service
-builder.Services.AddHttpClient<IExternalSatelliteService, ExternalSatelliteService>();
+builder.Services.AddHttpClient<IExternalSatelliteService, ExternalSatelliteService>((sp, client) =>
+{
+    var opts = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<ExternalApiOptions>>().Value;
+    if (!string.IsNullOrEmpty(opts.BaseUrl))
+    {
+        client.BaseAddress = new Uri(opts.BaseUrl);
+    }
+});
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>

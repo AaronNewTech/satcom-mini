@@ -28,4 +28,29 @@ public class ExternalApiController : ControllerBase
             message = "Data retrieved using correctly formatted 'apiKey' header"
         });
     }
+
+    [HttpGet("positions/{noradId}/{observerLat}/{observerLng}/{observerAlt}/{seconds}")]
+    public async Task<IActionResult> GetPositions(int noradId, double observerLat, double observerLng, double observerAlt, int seconds)
+    {
+        if (seconds < 1 || seconds > 300) return BadRequest(new { error = "seconds must be between 1 and 300" });
+
+        var resp = await _externalService.GetSatellitePositionsAsync(noradId, observerLat, observerLng, observerAlt, seconds);
+        if (resp == null) return NotFound(new { message = "No positions returned from external API" });
+
+        // Return the wrapper response (info + positions) to the caller unchanged
+        return Ok(resp);
+    }
+
+    [HttpGet("above/{observerLat}/{observerLng}/{observerAlt}/{searchRadius}/{categoryId}")]
+    public async Task<IActionResult> Above(double observerLat, double observerLng, double observerAlt, int searchRadius, int categoryId)
+    {
+        // Basic validation
+        if (searchRadius < 0 || searchRadius > 90) return BadRequest(new { error = "searchRadius must be between 0 and 90" });
+
+        var json = await _externalService.GetSatellitesAboveAsync(observerLat, observerLng, observerAlt, searchRadius, categoryId);
+        if (json == null) return NotFound(new { message = "No data returned from external API" });
+
+        // Return the provider's JSON body unchanged
+        return Content(json, "application/json");
+    }
 }
