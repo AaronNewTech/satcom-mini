@@ -68,6 +68,7 @@ PublishProfiles/
 .env.docker
 .env.local
 .env.production
+.env.bak
 appsettings.Production.json
 
 ## User secrets

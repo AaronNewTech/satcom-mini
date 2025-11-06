@@ -126,6 +126,9 @@ var app = builder.Build();
 
 app.UseCors();
 
+// Middleware: HMAC signing (validate signed requests before API key check)
+app.UseMiddleware<HmacMiddleware>();
+
 // Middleware: API key
 app.UseMiddleware<ApiKeyMiddleware>();
 
@@ -135,7 +138,8 @@ app.UseSwagger();
 app.UseSwaggerUI();
 
 
-// Health
+// Health (support both /health and /healthz)
+app.MapGet("/health", () => new { status = "ok" });
 app.MapGet("/healthz", () => new { status = "ok" });
 
 // Map attribute routed controllers (converted from minimal endpoints)
