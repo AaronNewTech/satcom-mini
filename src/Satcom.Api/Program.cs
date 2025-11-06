@@ -17,7 +17,7 @@ foreach (var path in envPaths)
     if (File.Exists(path))
     {
         DotNetEnv.Env.Load(path);
-        Console.WriteLine($"✅ Loaded .env from: {Path.GetFullPath(path)}");
+        // Console.WriteLine($"✅ Loaded .env from: {Path.GetFullPath(path)}");
         envLoaded = true;
         break;
     }
@@ -33,15 +33,15 @@ var builder = WebApplication.CreateBuilder(args);
 
 
 // Debug: Verify environment variables are loaded (remove in production)
-Console.WriteLine($"🗄️ DB Connection: {builder.Configuration.GetConnectionString("Postgres")}");
-Console.WriteLine($"🔑 Internal API Key: {builder.Configuration["ApiKey"]}");
-Console.WriteLine($"🌐 External API Key: {builder.Configuration["ExternalApiKey"]}");
+// Console.WriteLine($"🗄️ DB Connection: {builder.Configuration.GetConnectionString("Postgres")}");
+// Console.WriteLine($"🔑 Internal API Key: {builder.Configuration["ApiKey"]}");
+// Console.WriteLine($"🌐 External API Key: {builder.Configuration["ExternalApiKey"]}");
 
 // Debug: Show how the mapping works
 var externalKey = builder.Configuration["ExternalApiKey"];
 if (!string.IsNullOrEmpty(externalKey))
 {
-    Console.WriteLine($"� External API will use: 'apiKey: {externalKey}' in request headers");
+    // Console.WriteLine($"� External API will use: 'apiKey: {externalKey}' in request headers");
 }
 
 builder.Services.AddCors(options =>
