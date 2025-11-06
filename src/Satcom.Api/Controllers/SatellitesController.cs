@@ -56,6 +56,28 @@ public class SatellitesController : ControllerBase
         return Ok(rows);
     }
 
+    [HttpGet("{id:guid}/location")]
+    public async Task<IActionResult> GetLocation(Guid id)
+    {
+        var latest = await _db.Telemetries
+            .Where(t => t.SatelliteId == id)
+            .OrderByDescending(t => t.ReceivedAtUtc)
+            .Take(10)
+            .Select(t => new { t.BearingDeg, t.Station!.Lat, t.Station!.Lon })
+            .ToListAsync();
+
+        if (latest.Count < 2) return Ok(null);
+
+        var estimate = GeoCalc.EstimateFromBearings(
+            latest.Where(x => x.BearingDeg.HasValue)
+                  .Select(x => (new GeoPoint(x.Lat, x.Lon), x.BearingDeg!.Value))
+        );
+
+        if (estimate is null) return Ok(null);
+        var e = estimate.Value;
+        return Ok(new LocationOut(e.Point.Lat, e.Point.Lon, e.AccuracyKm, e.ComputedAtUtc));
+    }
+
     // Local convenience route that mirrors the external provider's /above endpoint.
     // This uses an absolute route so callers can hit /v1/satellite/above/...
     [HttpGet("/v1/satellite/above/{observerLat}/{observerLng}/{observerAlt}/{searchRadius}/{categoryId}")]
