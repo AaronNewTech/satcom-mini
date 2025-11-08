@@ -41,10 +41,25 @@ jobs:
       - name: Set up gcloud CLI
         uses: google-github-actions/setup-gcloud@v1
         with:
-          project_id: ${{ env.GCP_PROJECT_ID }}
+          # Do not set project_id here because setup-gcloud will run `gcloud config set project`
+          # which fails if gcloud is not yet authenticated with credentials that gcloud can refresh.
+          # We'll activate the short-lived credentials created by the auth action and then set project.
+          version: latest
 
       - name: Configure Docker authentication for GCR
         run: gcloud auth configure-docker --quiet
+
+      - name: Activate credentials for gcloud
+        shell: bash
+        run: |
+          # The auth action created a short-lived credentials file and exported its path to
+          # GOOGLE_GHA_CREDS_PATH (export_environment_variables: true). Activate it for gcloud.
+          if [ -z "$GOOGLE_GHA_CREDS_PATH" ]; then
+            echo "GOOGLE_GHA_CREDS_PATH is not set. Auth step may not have exported credentials." >&2
+            exit 1
+          fi
+          gcloud auth activate-service-account --key-file="$GOOGLE_GHA_CREDS_PATH"
+          gcloud config set project "$GCP_PROJECT_ID"
 
       - name: Build Docker image
         run: |
