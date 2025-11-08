@@ -72,8 +72,15 @@ jobs:
           export CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE="$GOOGLE_GHA_CREDS_PATH"
           export GOOGLE_APPLICATION_CREDENTIALS="$GOOGLE_GHA_CREDS_PATH"
 
-      - name: Configure Docker authentication for GCR
-        run: gcloud auth configure-docker --quiet
+      - name: Docker login to GCR using auth action access token
+        shell: bash
+        run: |
+          # Use the access token produced by the auth action to authenticate Docker to GCR
+          if [ -z "$CLOUDSDK_AUTH_ACCESS_TOKEN" ]; then
+            echo "CLOUDSDK_AUTH_ACCESS_TOKEN is empty - auth step did not produce an access token" >&2
+            exit 1
+          fi
+          echo "$CLOUDSDK_AUTH_ACCESS_TOKEN" | docker login -u oauth2accesstoken --password-stdin https://gcr.io
 
       - name: Build Docker image
         run: |
