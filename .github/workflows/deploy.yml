@@ -51,12 +51,8 @@ jobs:
         uses: google-github-actions/setup-gcloud@v1
         with:
           # Do not set project_id here because setup-gcloud will run `gcloud config set project`
-          # which fails if gcloud is not yet authenticated with credentials that gcloud can refresh.
-          # We'll activate the short-lived credentials created by the auth action and then set project.
+          # which can fail if gcloud is not yet authenticated with credentials that gcloud can refresh.
           version: latest
-
-      - name: Configure Docker authentication for GCR
-        run: gcloud auth configure-docker --quiet
 
       - name: Configure gcloud to use auth-created credentials
         shell: bash
@@ -64,7 +60,8 @@ jobs:
           # The auth action created a short-lived credentials file and exported its path to
           # GOOGLE_GHA_CREDS_PATH (export_environment_variables: true). gcloud cannot
           # 'activate-service-account' on that file because it's an external-account JSON.
-          # Instead set the environment variables gcloud understands and set the project.
+          # Instead set the environment variables gcloud understands so subsequent gcloud
+          # commands can use the external-account credentials or the access token.
           if [ -z "$GOOGLE_GHA_CREDS_PATH" ]; then
             echo "GOOGLE_GHA_CREDS_PATH is not set. Auth step may not have exported credentials." >&2
             exit 1
@@ -74,7 +71,9 @@ jobs:
           # Also export for this step so gcloud picks it up now
           export CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE="$GOOGLE_GHA_CREDS_PATH"
           export GOOGLE_APPLICATION_CREDENTIALS="$GOOGLE_GHA_CREDS_PATH"
-          gcloud config set project "$GCP_PROJECT_ID"
+
+      - name: Configure Docker authentication for GCR
+        run: gcloud auth configure-docker --quiet
 
       - name: Build Docker image
         run: |
@@ -90,6 +89,7 @@ jobs:
         run: |
           # Deploy the image (uses IMAGE exported into the environment earlier)
           gcloud run deploy "$GCP_SERVICE_NAME" \
+            --project "$GCP_PROJECT_ID" \
             --image "$IMAGE" \
             --region "$GCP_REGION" \
             --platform managed \
