@@ -29,8 +29,10 @@ jobs:
       - name: Authenticate to Google Cloud using Workload Identity
         uses: google-github-actions/auth@v1
         with:
+          # Full resource name for the provider (uses repository vars set in repo settings)
           workload_identity_provider: projects/${{ env.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/${{ env.GCP_POOL_ID }}/providers/${{ env.GCP_PROVIDER_ID }}
-          service_account_email: github-deployer@${{ env.GCP_PROJECT_ID }}.iam.gserviceaccount.com
+          # The service account to impersonate (required input name is `service_account`)
+          service_account: github-deployer@${{ env.GCP_PROJECT_ID }}.iam.gserviceaccount.com
 
       - name: Set up gcloud CLI
         uses: google-github-actions/setup-gcloud@v1
@@ -51,13 +53,11 @@ jobs:
           docker push "$IMAGE"
 
       - name: Deploy to Cloud Run (bind secret from Secret Manager)
-        env:
-          IMAGE: ${{ env.IMAGE }}
         run: |
-          # Deploy the image and bind the ApiSigningSecret from Secret Manager
+          # Deploy the image (uses IMAGE exported into the environment earlier)
           gcloud run deploy "$GCP_SERVICE_NAME" \
-            --image gcr.io/$GCP_PROJECT_ID/$GCP_SERVICE_NAME:${GITHUB_SHA} \
-            --region $GCP_REGION \
+            --image "$IMAGE" \
+            --region "$GCP_REGION" \
             --platform managed \
             --allow-unauthenticated \
             --set-secrets ApiSigningSecret=$GCP_SECRET_NAME:latest
