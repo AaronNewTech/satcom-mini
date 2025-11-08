@@ -77,8 +77,9 @@ jobs:
 
       - name: Build Docker image
         run: |
+          # Build the API image from the API project folder where the Dockerfile lives
           IMAGE=gcr.io/${GCP_PROJECT_ID}/${GCP_SERVICE_NAME}:${GITHUB_SHA}
-          docker build -t "$IMAGE" .
+          docker build -t "$IMAGE" -f src/Satcom.Api/Dockerfile src/Satcom.Api
           echo "IMAGE=$IMAGE" >> $GITHUB_ENV
 
       - name: Push image to GCR
