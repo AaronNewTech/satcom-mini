@@ -49,16 +49,22 @@ jobs:
       - name: Configure Docker authentication for GCR
         run: gcloud auth configure-docker --quiet
 
-      - name: Activate credentials for gcloud
+      - name: Configure gcloud to use auth-created credentials
         shell: bash
         run: |
           # The auth action created a short-lived credentials file and exported its path to
-          # GOOGLE_GHA_CREDS_PATH (export_environment_variables: true). Activate it for gcloud.
+          # GOOGLE_GHA_CREDS_PATH (export_environment_variables: true). gcloud cannot
+          # 'activate-service-account' on that file because it's an external-account JSON.
+          # Instead set the environment variables gcloud understands and set the project.
           if [ -z "$GOOGLE_GHA_CREDS_PATH" ]; then
             echo "GOOGLE_GHA_CREDS_PATH is not set. Auth step may not have exported credentials." >&2
             exit 1
           fi
-          gcloud auth activate-service-account --key-file="$GOOGLE_GHA_CREDS_PATH"
+          echo "CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE=$GOOGLE_GHA_CREDS_PATH" >> $GITHUB_ENV
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$GOOGLE_GHA_CREDS_PATH" >> $GITHUB_ENV
+          # Also export for this step so gcloud picks it up now
+          export CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE="$GOOGLE_GHA_CREDS_PATH"
+          export GOOGLE_APPLICATION_CREDENTIALS="$GOOGLE_GHA_CREDS_PATH"
           gcloud config set project "$GCP_PROJECT_ID"
 
       - name: Build Docker image
