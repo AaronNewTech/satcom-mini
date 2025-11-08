@@ -37,6 +37,9 @@ jobs:
           create_credentials_file: true
           # Export paths (GOOGLE_GHA_CREDS_PATH) so subsequent steps can find the file
           export_environment_variables: true
+          # Ensure the ID token audience matches what gcloud expects when refreshing
+          id_token_audience: https://cloud.google.com/iam
+          id_token_include_email: true
 
       - name: Set up gcloud CLI
         uses: google-github-actions/setup-gcloud@v1
