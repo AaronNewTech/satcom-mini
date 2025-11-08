@@ -33,6 +33,10 @@ jobs:
           workload_identity_provider: projects/${{ env.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/${{ env.GCP_POOL_ID }}/providers/${{ env.GCP_PROVIDER_ID }}
           # The service account to impersonate (required input name is `service_account`)
           service_account: github-deployer@${{ env.GCP_PROJECT_ID }}.iam.gserviceaccount.com
+          # Write a short-lived credentials JSON file so gcloud can use it
+          create_credentials_file: true
+          # Export credentials path in environment variables (optional but useful)
+          export_environment_variables: true
 
       - name: Set up gcloud CLI
         uses: google-github-actions/setup-gcloud@v1
