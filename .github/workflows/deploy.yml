@@ -49,6 +49,18 @@ jobs:
         run: |
           echo "CLOUDSDK_AUTH_ACCESS_TOKEN=${{ steps.auth.outputs.access_token }}" >> $GITHUB_ENV
 
+      - name: Debug: inspect created creds (temporary)
+        if: always()
+        shell: bash
+        run: |
+          echo "--- Temporary debug: showing created credentials JSON (remove this step after) ---"
+          if [ -n "$GOOGLE_GHA_CREDS_PATH" ] && [ -f "$GOOGLE_GHA_CREDS_PATH" ]; then
+            # Print select fields only to avoid dumping private keys. This helps inspect audiences and token types.
+            jq '{type,subject_token_type,token_url,credential_source,service_account_impersonation_url,client_id,quota_project_id} + ( . | {audiences: .audiences} )' "$GOOGLE_GHA_CREDS_PATH" || true
+          else
+            echo "No credentials file present at $GOOGLE_GHA_CREDS_PATH"
+          fi
+
       - name: Set up gcloud CLI
         uses: google-github-actions/setup-gcloud@v1
         with:
