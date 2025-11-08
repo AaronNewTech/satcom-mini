@@ -1,0 +1,63 @@
+name: CI/CD — Build and deploy to Cloud Run
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+  GCP_PROJECT_NUMBER: ${{ vars.GCP_PROJECT_NUMBER }}
+  GCP_REGION: ${{ vars.GCP_REGION }}
+  GCP_SERVICE_NAME: ${{ vars.GCP_SERVICE_NAME }}
+  GCP_POOL_ID: ${{ vars.GCP_POOL_ID }}
+  GCP_PROVIDER_ID: ${{ vars.GCP_PROVIDER_ID }}
+  GCP_SECRET_NAME: ${{ vars.GCP_SECRET_NAME }}
+
+jobs:
+  deploy:
+    name: Build, push image, and deploy to Cloud Run
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud using Workload Identity
+        uses: google-github-actions/auth@v1
+        with:
+          workload_identity_provider: projects/${{ env.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/${{ env.GCP_POOL_ID }}/providers/${{ env.GCP_PROVIDER_ID }}
+          service_account_email: github-deployer@${{ env.GCP_PROJECT_ID }}.iam.gserviceaccount.com
+
+      - name: Set up gcloud CLI
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+
+      - name: Configure Docker authentication for GCR
+        run: gcloud auth configure-docker --quiet
+
+      - name: Build Docker image
+        run: |
+          IMAGE=gcr.io/${GCP_PROJECT_ID}/${GCP_SERVICE_NAME}:${GITHUB_SHA}
+          docker build -t "$IMAGE" .
+          echo "IMAGE=$IMAGE" >> $GITHUB_ENV
+
+      - name: Push image to GCR
+        run: |
+          docker push "$IMAGE"
+
+      - name: Deploy to Cloud Run (bind secret from Secret Manager)
+        env:
+          IMAGE: ${{ env.IMAGE }}
+        run: |
+          # Deploy the image and bind the ApiSigningSecret from Secret Manager
+          gcloud run deploy "$GCP_SERVICE_NAME" \
+            --image gcr.io/$GCP_PROJECT_ID/$GCP_SERVICE_NAME:${GITHUB_SHA} \
+            --region $GCP_REGION \
+            --platform managed \
+            --allow-unauthenticated \
+            --set-secrets ApiSigningSecret=$GCP_SECRET_NAME:latest

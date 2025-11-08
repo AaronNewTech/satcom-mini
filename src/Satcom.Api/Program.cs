@@ -128,7 +128,7 @@ app.UseCors();
 
 // Middleware: HMAC signing (validate signed requests before API key check)
 
-// app.UseMiddleware<HmacMiddleware>();
+app.UseMiddleware<HmacMiddleware>();
 
 // Middleware: API key
 app.UseMiddleware<ApiKeyMiddleware>();
