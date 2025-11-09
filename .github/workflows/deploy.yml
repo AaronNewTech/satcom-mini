@@ -48,6 +48,10 @@ jobs:
           # Ensure the ID token audience matches what gcloud expects when refreshing
           id_token_audience: https://cloud.google.com/iam
           id_token_include_email: true
+          # Request an access token output so we can use it for docker login
+          token_format: access_token
+          # Ensure the access token has the required scopes for pushing images
+          access_token_scopes: https://www.googleapis.com/auth/cloud-platform
 
       - name: Persist auth action access token for gcloud
         if: ${{ steps.auth.outputs.access_token != '' }}
