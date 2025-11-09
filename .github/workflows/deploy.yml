@@ -49,7 +49,7 @@ jobs:
         run: |
           echo "CLOUDSDK_AUTH_ACCESS_TOKEN=${{ steps.auth.outputs.access_token }}" >> $GITHUB_ENV
 
-      - name: Debug: inspect created creds (temporary)
+      - name: "Debug: inspect created creds (temporary)"
         if: ${{ always() }}
         shell: bash
         run: |
