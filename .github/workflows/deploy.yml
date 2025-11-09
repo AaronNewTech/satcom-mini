@@ -45,12 +45,12 @@ jobs:
           token_format: access_token
 
       - name: Persist auth action access token for gcloud
-        if: steps.auth.outputs.access_token != ''
+        if: ${{ steps.auth.outputs.access_token != '' }}
         run: |
           echo "CLOUDSDK_AUTH_ACCESS_TOKEN=${{ steps.auth.outputs.access_token }}" >> $GITHUB_ENV
 
       - name: Debug: inspect created creds (temporary)
-        if: always()
+        if: ${{ always() }}
         shell: bash
         run: |
           echo "--- Temporary debug: showing created credentials JSON (remove this step after) ---"
