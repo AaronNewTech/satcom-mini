@@ -79,6 +79,34 @@ jobs:
           export CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE="$GOOGLE_GHA_CREDS_PATH"
           export GOOGLE_APPLICATION_CREDENTIALS="$GOOGLE_GHA_CREDS_PATH"
 
+      - name: Docker login to GCR using auth action access token (isolated config)
+        shell: bash
+        run: |
+          # Ensure the access token from the auth action is available
+          if [ -z "${CLOUDSDK_AUTH_ACCESS_TOKEN}" ]; then
+            echo "CLOUDSDK_AUTH_ACCESS_TOKEN is empty - auth step did not produce an access token" >&2
+            exit 1
+          fi
+          # Ensure DOCKER_CONFIG is set (we set it earlier)
+          if [ -z "$DOCKER_CONFIG" ]; then
+            echo "DOCKER_CONFIG not set; defaulting to runner temp" >&2
+            export DOCKER_CONFIG="$RUNNER_TEMP/docker-config"
+            mkdir -p "$DOCKER_CONFIG"
+          fi
+          echo "Logging in to gcr.io using short-lived access token"
+          echo "$CLOUDSDK_AUTH_ACCESS_TOKEN" | docker --config "$DOCKER_CONFIG" login -u oauth2accesstoken --password-stdin https://gcr.io
+
+      - name: Verify Docker config (sanitized)
+        shell: bash
+        run: |
+          if [ -f "$DOCKER_CONFIG/config.json" ]; then
+            echo "Docker config keys (sanitized):"
+            # Print whether a credStore or credHelpers are configured and list auth hosts (no tokens)
+            jq '{credsStore: .credsStore, credHelpers: .credHelpers, authHosts: (if .auths then keys(.auths) else [] end)}' "$DOCKER_CONFIG/config.json" || true
+          else
+            echo "No docker config present at $DOCKER_CONFIG/config.json"
+          fi
+
       # We avoid running `gcloud auth configure-docker` so Docker does not
       # register a credential helper that calls gcloud (which may attempt a
       # token refresh and encounter the audience mismatch). Instead we will
