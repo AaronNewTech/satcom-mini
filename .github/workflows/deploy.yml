@@ -26,6 +26,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Prepare isolated Docker config
+        shell: bash
+        run: |
+          DOCKER_CFG_DIR="$RUNNER_TEMP/docker-config"
+          mkdir -p "$DOCKER_CFG_DIR"
+          echo "DOCKER_CONFIG=$DOCKER_CFG_DIR" >> $GITHUB_ENV
+
       - name: Authenticate to Google Cloud using Workload Identity
         id: auth
         uses: google-github-actions/auth@v1
@@ -43,7 +50,7 @@ jobs:
           id_token_include_email: true
 
       - name: Persist auth action access token for gcloud
-        if: steps.auth.outputs.access_token != ''
+        if: ${{ steps.auth.outputs.access_token != '' }}
         run: |
           echo "CLOUDSDK_AUTH_ACCESS_TOKEN=${{ steps.auth.outputs.access_token }}" >> $GITHUB_ENV
 
@@ -72,31 +79,21 @@ jobs:
           export CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE="$GOOGLE_GHA_CREDS_PATH"
           export GOOGLE_APPLICATION_CREDENTIALS="$GOOGLE_GHA_CREDS_PATH"
 
-      - name: Build and push Docker image (isolated docker config)
-        shell: bash
+      # We avoid running `gcloud auth configure-docker` so Docker does not
+      # register a credential helper that calls gcloud (which may attempt a
+      # token refresh and encounter the audience mismatch). Instead we will
+      # log in explicitly using the short-lived access token and the isolated
+      # DOCKER_CONFIG directory in the build+push step below.
+
+      - name: Build Docker image
         run: |
-          # Use the auth action's access token to log in and push the image.
-          # We set an isolated DOCKER_CONFIG directory so Docker uses the
-          # token we provide and does not invoke gcloud's credential helper.
-          if [ -z "${{ steps.auth.outputs.access_token }}" ]; then
-            echo "Auth action did not produce an access token" >&2
-            exit 1
-          fi
-          DOCKER_CFG_DIR="$RUNNER_TEMP/docker-config"
-          mkdir -p "$DOCKER_CFG_DIR"
-          export DOCKER_CONFIG="$DOCKER_CFG_DIR"
-          echo "DOCKER_CONFIG=$DOCKER_CFG_DIR" >> $GITHUB_ENV
-
+          # Build the API image from the API project folder where the Dockerfile lives
           IMAGE=gcr.io/${GCP_PROJECT_ID}/${GCP_SERVICE_NAME}:${GITHUB_SHA}
-
-          echo "Logging in to gcr.io using short-lived access token"
-          echo "${{ steps.auth.outputs.access_token }}" | docker login -u oauth2accesstoken --password-stdin https://gcr.io
-
-          echo "Building image $IMAGE"
           docker build -t "$IMAGE" -f src/Satcom.Api/Dockerfile src/Satcom.Api
           echo "IMAGE=$IMAGE" >> $GITHUB_ENV
 
-          echo "Pushing image $IMAGE"
+      - name: Push image to GCR
+        run: |
           docker push "$IMAGE"
 
       - name: Deploy to Cloud Run (bind secret from Secret Manager)
