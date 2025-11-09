@@ -72,18 +72,31 @@ jobs:
           export CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE="$GOOGLE_GHA_CREDS_PATH"
           export GOOGLE_APPLICATION_CREDENTIALS="$GOOGLE_GHA_CREDS_PATH"
 
-      - name: Configure Docker authentication for GCR
-        run: gcloud auth configure-docker --quiet
-
-      - name: Build Docker image
+      - name: Build and push Docker image (isolated docker config)
+        shell: bash
         run: |
-          # Build the API image from the API project folder where the Dockerfile lives
+          # Use the auth action's access token to log in and push the image.
+          # We set an isolated DOCKER_CONFIG directory so Docker uses the
+          # token we provide and does not invoke gcloud's credential helper.
+          if [ -z "${{ steps.auth.outputs.access_token }}" ]; then
+            echo "Auth action did not produce an access token" >&2
+            exit 1
+          fi
+          DOCKER_CFG_DIR="$RUNNER_TEMP/docker-config"
+          mkdir -p "$DOCKER_CFG_DIR"
+          export DOCKER_CONFIG="$DOCKER_CFG_DIR"
+          echo "DOCKER_CONFIG=$DOCKER_CFG_DIR" >> $GITHUB_ENV
+
           IMAGE=gcr.io/${GCP_PROJECT_ID}/${GCP_SERVICE_NAME}:${GITHUB_SHA}
+
+          echo "Logging in to gcr.io using short-lived access token"
+          echo "${{ steps.auth.outputs.access_token }}" | docker login -u oauth2accesstoken --password-stdin https://gcr.io
+
+          echo "Building image $IMAGE"
           docker build -t "$IMAGE" -f src/Satcom.Api/Dockerfile src/Satcom.Api
           echo "IMAGE=$IMAGE" >> $GITHUB_ENV
 
-      - name: Push image to GCR
-        run: |
+          echo "Pushing image $IMAGE"
           docker push "$IMAGE"
 
       - name: Deploy to Cloud Run (bind secret from Secret Manager)
