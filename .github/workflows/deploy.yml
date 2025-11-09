@@ -41,25 +41,11 @@ jobs:
           # Ensure the ID token audience matches what gcloud expects when refreshing
           id_token_audience: https://cloud.google.com/iam
           id_token_include_email: true
-          # Request the action to return an access token as an output so we can use it for Docker login
-          token_format: access_token
 
       - name: Persist auth action access token for gcloud
-        if: ${{ steps.auth.outputs.access_token != '' }}
+        if: steps.auth.outputs.access_token != ''
         run: |
           echo "CLOUDSDK_AUTH_ACCESS_TOKEN=${{ steps.auth.outputs.access_token }}" >> $GITHUB_ENV
-
-      - name: "Debug: inspect created creds (temporary)"
-        if: ${{ always() }}
-        shell: bash
-        run: |
-          echo "--- Temporary debug: showing created credentials JSON (remove this step after) ---"
-          if [ -n "$GOOGLE_GHA_CREDS_PATH" ] && [ -f "$GOOGLE_GHA_CREDS_PATH" ]; then
-            # Print select fields only to avoid dumping private keys. This helps inspect audiences and token types.
-            jq '{type,subject_token_type,token_url,credential_source,service_account_impersonation_url,client_id,quota_project_id} + ( . | {audiences: .audiences} )' "$GOOGLE_GHA_CREDS_PATH" || true
-          else
-            echo "No credentials file present at $GOOGLE_GHA_CREDS_PATH"
-          fi
 
       - name: Set up gcloud CLI
         uses: google-github-actions/setup-gcloud@v1
@@ -86,15 +72,8 @@ jobs:
           export CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE="$GOOGLE_GHA_CREDS_PATH"
           export GOOGLE_APPLICATION_CREDENTIALS="$GOOGLE_GHA_CREDS_PATH"
 
-      - name: Docker login to GCR using auth action access token
-        shell: bash
-        run: |
-          # Use the access token produced by the auth action to authenticate Docker to GCR
-          if [ -z "$CLOUDSDK_AUTH_ACCESS_TOKEN" ]; then
-            echo "CLOUDSDK_AUTH_ACCESS_TOKEN is empty - auth step did not produce an access token" >&2
-            exit 1
-          fi
-          echo "$CLOUDSDK_AUTH_ACCESS_TOKEN" | docker login -u oauth2accesstoken --password-stdin https://gcr.io
+      - name: Configure Docker authentication for GCR
+        run: gcloud auth configure-docker --quiet
 
       - name: Build Docker image
         run: |
