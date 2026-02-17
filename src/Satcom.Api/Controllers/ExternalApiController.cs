@@ -5,14 +5,9 @@ namespace Satcom.Api.Controllers;
 
 [ApiController]
 [Route("v1/external")]
-public class ExternalApiController : ControllerBase
+public class ExternalApiController(IExternalSatelliteService externalService) : ControllerBase
 {
-    private readonly IExternalSatelliteService _externalService;
-
-    public ExternalApiController(IExternalSatelliteService externalService)
-    {
-        _externalService = externalService;
-    }
+    private readonly IExternalSatelliteService _externalService = externalService;
 
     [HttpGet("satellite/{noradId}")]
     public async Task<IActionResult> GetSatellite(string noradId)

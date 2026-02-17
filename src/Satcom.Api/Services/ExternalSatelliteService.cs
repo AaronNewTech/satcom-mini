@@ -13,21 +13,14 @@ public interface IExternalSatelliteService
     Task<string?> GetSatellitesAboveAsync(double observerLat, double observerLng, double observerAlt, int searchRadius, int categoryId);
 }
 
-public class ExternalSatelliteService : IExternalSatelliteService
+public class ExternalSatelliteService(
+    HttpClient httpClient,
+    IOptions<ExternalApiOptions> apiOptions,
+    ILogger<ExternalSatelliteService> logger) : IExternalSatelliteService
 {
-    private readonly HttpClient _httpClient;
-    private readonly ExternalApiOptions _apiOptions;
-    private readonly ILogger<ExternalSatelliteService> _logger;
-
-    public ExternalSatelliteService(
-        HttpClient httpClient, 
-        IOptions<ExternalApiOptions> apiOptions,
-        ILogger<ExternalSatelliteService> logger)
-    {
-        _httpClient = httpClient;
-        _apiOptions = apiOptions.Value;
-        _logger = logger;
-    }
+    private readonly HttpClient _httpClient = httpClient;
+    private readonly ExternalApiOptions _apiOptions = apiOptions.Value;
+    private readonly ILogger<ExternalSatelliteService> _logger = logger;
 
     public async Task<ExternalSatelliteData?> GetSatelliteDataAsync(string noradId)
     {
@@ -238,17 +231,17 @@ public record ExternalSatelliteData(
     DateTime LastUpdate
 );
 
-public record ExternalPositionsResponse(ExternalInfo info, ExternalPositionElement[] positions);
+public record ExternalPositionsResponse(ExternalInfo Info, ExternalPositionElement[] Positions);
 
-public record ExternalInfo(int satid, string satname, int transactionscount);
+public record ExternalInfo(int Satid, string Satname, int Transactionscount);
 
 public record ExternalPositionElement(
-    double satlatitude,
-    double satlongitude,
-    double sataltitude,
-    double azimuth,
-    double elevation,
-    double ra,
-    double dec,
-    long timestamp
+    double Satlatitude,
+    double Satlongitude,
+    double Sataltitude,
+    double Azimuth,
+    double Elevation,
+    double Ra,
+    double Dec,
+    long Timestamp
 );

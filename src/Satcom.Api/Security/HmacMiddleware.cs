@@ -123,9 +123,8 @@ public class HmacMiddleware
             return;
         }
 
-        // Valid signature — mark request as authenticated via HMAC
-        context.Items[AuthFlagKey] = true;
-        _logger.LogDebug("HMAC authentication succeeded for {Path}", context.Request.Path);
+    // Valid signature — mark request as authenticated via HMAC
+    context.Items[AuthFlagKey] = true;
 
         await _next(context);
     }

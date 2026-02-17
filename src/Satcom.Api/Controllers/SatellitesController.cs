@@ -9,16 +9,10 @@ namespace Satcom.Api.Controllers;
 
 [ApiController]
 [Route("v1/satellites")]
-public class SatellitesController : ControllerBase
+public class SatellitesController(AppDbContext db, IExternalSatelliteService? externalService = null) : ControllerBase
 {
-    private readonly AppDbContext _db;
-    private readonly IExternalSatelliteService? _externalService;
-
-    public SatellitesController(AppDbContext db, IExternalSatelliteService? externalService = null)
-    {
-        _db = db;
-        _externalService = externalService;
-    }
+    private readonly AppDbContext _db = db;
+    private readonly IExternalSatelliteService? _externalService = externalService;
 
     [HttpGet]
     public async Task<IActionResult> GetAll()

@@ -864,3 +864,8 @@ public class DatabasePerformanceTests
 - [ ] Write troubleshooting documentation
 
 **Each feature includes detailed implementation steps, code examples, and testing strategies to ensure professional-quality delivery!** 🚀
+
+
+Update sign_and_call.sh to compute the hash directly from the file (streaming) and add a short comment about required secret format? (I can make and commit that change.)
+
+Or leave it as-is because it already worked for your payloads?

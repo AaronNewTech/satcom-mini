@@ -3,6 +3,7 @@ import SatellitesPage from './pages/SatellitesPage';
 import GroundStationsPage from './pages/GroundStationsPage';
 import TelemetryPage from './pages/TelemetryPage';
 import MapView from './pages/MapView';
+import SatelliteMapView from './pages/SatellitesInView';
 
 function App() {
   return (
@@ -36,6 +37,9 @@ function App() {
             <li>
               <Link to="/ground-stations">Ground Stations</Link>
             </li>
+            <li>
+              <Link to="/satellites-in-view">Satellites in View</Link>
+            </li>
           </ul>
         </nav>
         <Routes>
@@ -61,7 +65,9 @@ function App() {
           <Route path="/map" element={<MapView />} />
           <Route path="/satellites" element={<SatellitesPage />} />
           <Route path="/ground-stations" element={<GroundStationsPage />} />
+          <Route path="/satellites-in-view" element={<SatelliteMapView />} />
         </Routes>
+        
       </div>
     </Router>
   );

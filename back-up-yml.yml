@@ -1,0 +1,98 @@
+name: CI/CD — Build and deploy to Cloud Run
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+  GCP_PROJECT_NUMBER: ${{ vars.GCP_PROJECT_NUMBER }}
+  GCP_REGION: ${{ vars.GCP_REGION }}
+  GCP_SERVICE_NAME: ${{ vars.GCP_SERVICE_NAME }}
+  GCP_POOL_ID: ${{ vars.GCP_POOL_ID }}
+  GCP_PROVIDER_ID: ${{ vars.GCP_PROVIDER_ID }}
+  GCP_SECRET_NAME: ${{ vars.GCP_SECRET_NAME }}
+
+jobs:
+  deploy:
+    name: Build, push image, and deploy to Cloud Run
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud using Workload Identity
+        id: auth
+        uses: google-github-actions/auth@v1
+        with:
+          # Full resource name for the provider (uses repository vars set in repo settings)
+          workload_identity_provider: projects/${{ env.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/${{ env.GCP_POOL_ID }}/providers/${{ env.GCP_PROVIDER_ID }}
+          # The service account to impersonate (required input name is `service_account`)
+          service_account: github-deployer@${{ env.GCP_PROJECT_ID }}.iam.gserviceaccount.com
+          # Create a short-lived credentials file so `gcloud` can authenticate correctly
+          create_credentials_file: true
+          # Export paths (GOOGLE_GHA_CREDS_PATH) so subsequent steps can find the file
+          export_environment_variables: true
+          # Ensure the ID token audience matches what gcloud expects when refreshing
+          id_token_audience: https://cloud.google.com/iam
+          id_token_include_email: true
+
+      - name: Persist auth action access token for gcloud
+        if: steps.auth.outputs.access_token != ''
+        run: |
+          echo "CLOUDSDK_AUTH_ACCESS_TOKEN=${{ steps.auth.outputs.access_token }}" >> $GITHUB_ENV
+
+      - name: Set up gcloud CLI
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          # Do not set project_id here because setup-gcloud will run `gcloud config set project`
+          # which can fail if gcloud is not yet authenticated with credentials that gcloud can refresh.
+          version: latest
+
+      - name: Configure gcloud to use auth-created credentials
+        shell: bash
+        run: |
+          # The auth action created a short-lived credentials file and exported its path to
+          # GOOGLE_GHA_CREDS_PATH (export_environment_variables: true). gcloud cannot
+          # 'activate-service-account' on that file because it's an external-account JSON.
+          # Instead set the environment variables gcloud understands so subsequent gcloud
+          # commands can use the external-account credentials or the access token.
+          if [ -z "$GOOGLE_GHA_CREDS_PATH" ]; then
+            echo "GOOGLE_GHA_CREDS_PATH is not set. Auth step may not have exported credentials." >&2
+            exit 1
+          fi
+          echo "CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE=$GOOGLE_GHA_CREDS_PATH" >> $GITHUB_ENV
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$GOOGLE_GHA_CREDS_PATH" >> $GITHUB_ENV
+          # Also export for this step so gcloud picks it up now
+          export CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE="$GOOGLE_GHA_CREDS_PATH"
+          export GOOGLE_APPLICATION_CREDENTIALS="$GOOGLE_GHA_CREDS_PATH"
+
+      - name: Configure Docker authentication for GCR
+        run: gcloud auth configure-docker --quiet
+
+      - name: Build Docker image
+        run: |
+          # Build the API image from the API project folder where the Dockerfile lives
+          IMAGE=gcr.io/${GCP_PROJECT_ID}/${GCP_SERVICE_NAME}:${GITHUB_SHA}
+          docker build -t "$IMAGE" -f src/Satcom.Api/Dockerfile src/Satcom.Api
+          echo "IMAGE=$IMAGE" >> $GITHUB_ENV
+
+      - name: Push image to GCR
+        run: |
+          docker push "$IMAGE"
+
+      - name: Deploy to Cloud Run (bind secret from Secret Manager)
+        run: |
+          # Deploy the image (uses IMAGE exported into the environment earlier)
+          gcloud run deploy "$GCP_SERVICE_NAME" \
+            --project "$GCP_PROJECT_ID" \
+            --image "$IMAGE" \
+            --region "$GCP_REGION" \
+            --platform managed \
+            --allow-unauthenticated \
+            --set-secrets ApiSigningSecret=$GCP_SECRET_NAME:latest

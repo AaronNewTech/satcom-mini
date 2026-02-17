@@ -17,7 +17,7 @@ export function useTelemetry() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function fetchTelemetryData() {
+    async function fetchTelemetryDataByStationId() {
       setLoading(true);
       setError(null);
       try {
@@ -40,7 +40,7 @@ export function useTelemetry() {
         setLoading(false);
       }
     }
-    fetchTelemetryData();
+    fetchTelemetryDataByStationId();
   }, []);
 
   return { telemetryData, loading, error };

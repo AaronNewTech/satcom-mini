@@ -1,5 +1,5 @@
 import React from 'react';
-import { useTelemetry } from '../hooks/useTelemetry';
+import { useTelemetry } from '../hooks/useGroundStationTelemetry';
 
 const TelemetrySection: React.FC = () => {
   const { telemetryData, loading, error } = useTelemetry();

@@ -61,6 +61,8 @@ CANONICAL=$(printf '%s\n%s\n%s\n%s' "${METHOD^^}" "$PATH_AND_QUERY" "$TIMESTAMP"
 # compute HMAC-SHA256 base64
 SIGNATURE=$(printf '%s' "$CANONICAL" | openssl dgst -sha256 -hmac "$ApiSigningSecret" -binary | openssl base64)
 
+# Removed debug prints: do not log canonical, signature, or body hash in production
+
 # build curl command
 CURL_OPTS=( -sS -w "\nHTTP_STATUS:%{http_code}\n" -X "$METHOD" -H "x-timestamp: $TIMESTAMP" -H "x-signature: $SIGNATURE" )
 if [ -n "$BODY_FILE" ]; then
